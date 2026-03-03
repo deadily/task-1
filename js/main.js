@@ -1,3 +1,5 @@
+let eventBus = new Vue();
+
 Vue.component('product', {
     props: {
         premium: {
@@ -20,10 +22,6 @@ Vue.component('product', {
             <p v-else-if="inventory <= 10 && inventory > 0">Almost sold out!</p>
             <p v-else :style="{ textDecoration: 'line-through' }">Out of stock</p>
             
-            <product-details></product-details>
-            
-
-            <p>Shipping: {{ shipping }}</p>
 
             <div 
                 class="color-box"
@@ -34,28 +32,11 @@ Vue.component('product', {
             >
             </div>
 
-            <ul>
-                <li v-for="size in sizes">{{ size }}</li>
-            </ul>
-
             <button v-on:click="addToCart" :disabled="!inStock" :class="{ disabledButton: !inStock }">Add to cart</button>
             <button v-on:click="deleteCart">delete cart</button>
 
-            <div>
-                <h2>Reviews</h2>
-                <p v-if="!reviews.length">There are no reviews yet.</p>
-                <ul>
-                    <li v-for="review in reviews">
-                        <p>{{ review.name }}</p>
-                        <p>Rating: {{ review.rating }}</p>
-                        <p>{{ review.review }}</p>
-                        <p>Recomend: {{ review.recommend }}</p>
-                    </li>
-                </ul>
-            </div>
-
             
-            <product-tabs :reviews="reviews"></product-tabs>
+            <product-tabs :reviews="reviews" :shipping-cost="shipping" :product-details="details" :product-sizes="sizes"></product-tabs>
         </div>
    </div>
    `,
@@ -70,6 +51,7 @@ Vue.component('product', {
             inventory: 0,
             onSale: true,
             reviews: [],
+            details: ['80% cotton', '20% polyester', 'ecology friendly'],
             variants: [
                 {
                     variantId: 2234,
@@ -106,11 +88,6 @@ Vue.component('product', {
                 return this.variants[this.selectedVariant].variantQuantity
             },
 
-            addReview(productReview) {
-                this.reviews.push(productReview)
-            }
-
-
     },
 
     computed: {
@@ -138,6 +115,12 @@ Vue.component('product', {
             }
         }
     },
+
+    mounted() {
+        eventBus.$on('review-submitted', (productReview) => {
+            this.reviews.push(productReview)
+        })
+    }
 })
 
 Vue.component('product-details', {
@@ -208,6 +191,8 @@ Vue.component('product-review', {
 
     methods:{
         onSubmit() {
+            this.errors = []
+
             if(this.name && this.review && this.rating && this.recommend) {
                 let productReview = {
                     name: this.name,
@@ -215,7 +200,7 @@ Vue.component('product-review', {
                     rating: this.rating,
                     recommend: this.recommend
                 }
-                this.$emit('review-submitted', productReview)
+                eventBus.$emit('review-submitted', productReview)
                 this.name = null
                 this.review = null
                 this.rating = null
@@ -234,6 +219,21 @@ Vue.component('product-tabs', {
         reviews: {
             type: Array,
             required: false
+        },
+
+        shippingCost: {
+            type: [String,Number],
+            required: true
+        },
+
+        productDetails: {
+            type: Array,
+            required: true
+        },
+
+        productSizes: {
+            type: Array,
+            required: true
         }
     },
 
@@ -246,25 +246,43 @@ Vue.component('product-tabs', {
                     @click="selectedTab = tab"
                 >{{ tab }}</span>
             </ul>
-            <div>
+            <div v-show="selectedTab === 'Reviews'">
                 <p v-if="!reviews.length">There are no reviews yet.</p>
                 <ul>
-                    <li v-for="review in reviews">
-                    <p>{{ review.name }}</p>
-                    <p>Rating: {{ review.rating }}</p>
-                    <p>{{ review.review }}</p>
+                    <li v-for="(review, index) in reviews" :key="index">
+                        <p><strong>{{ review.name }}</strong></p>
+                        <p>Rating: {{ review.rating }}</p>
+                        <p>{{ review.review }}</p>
+                        <p>Recomend: {{ review.recommend }}</p>
                     </li>
                 </ul>
             </div>
-            <div>
-                <product-review @review-submitted="addReview"></product-review>
+            <div v-show="selectedTab === 'Make a Review'">
+                <product-review></product-review>
+            </div>
+
+            <div v-show="selectedTab === 'Shipping'">
+                <p>Shipping: {{ shippingCost }}</p>
+            </div>
+
+            <div v-show="selectedTab === 'Details'">
+                <ul>
+                    <li v-for="(detail, index) in productDetails" :key="index">
+                        {{ detail }}
+                    </li>
+                </ul>
+                <ul>
+                    <li v-for="(sizes, index) in productSizes" :key="'sizes' + index">
+                        {{ sizes }}
+                    </li>
+                </ul>
             </div>
 
         </div>
     `,
     data() {
         return {
-            tabs: ['Reviews', 'Make a Review'],
+            tabs: ['Reviews', 'Make a Review', 'Shipping', 'Details'],
             selectedTab: 'Reviews'
         }
     }
