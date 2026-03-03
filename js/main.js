@@ -54,8 +54,8 @@ Vue.component('product', {
                 </ul>
             </div>
 
-            <product-review @review-submitted="addReview"></product-review>
-
+            
+            <product-tabs :reviews="reviews"></product-tabs>
         </div>
    </div>
    `,
@@ -155,7 +155,7 @@ Vue.component('product-details', {
 })
 
 Vue.component('product-review', {
-   template: `
+    template: `
     <form class="review-form" @submit.prevent="onSubmit">
         <p v-if="errors.length">
             <b>Please correct the following error(s):</b>
@@ -228,6 +228,49 @@ Vue.component('product-review', {
         }
     }
 })
+
+Vue.component('product-tabs', {
+    props: {
+        reviews: {
+            type: Array,
+            required: false
+        }
+    },
+
+    template: `
+        <div>   
+            <ul>
+                <span class="tab"
+                    :class="{ activeTab: selectedTab === tab }"
+                    v-for="(tab, index) in tabs"
+                    @click="selectedTab = tab"
+                >{{ tab }}</span>
+            </ul>
+            <div>
+                <p v-if="!reviews.length">There are no reviews yet.</p>
+                <ul>
+                    <li v-for="review in reviews">
+                    <p>{{ review.name }}</p>
+                    <p>Rating: {{ review.rating }}</p>
+                    <p>{{ review.review }}</p>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <product-review @review-submitted="addReview"></product-review>
+            </div>
+
+        </div>
+    `,
+    data() {
+        return {
+            tabs: ['Reviews', 'Make a Review'],
+            selectedTab: 'Reviews'
+        }
+    }
+})
+
+
 
 
 let app = new Vue({
