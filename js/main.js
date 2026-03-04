@@ -259,13 +259,25 @@ Vue.component('product-tabs', {
                 >{{ tab }}</span>
             </ul>
             <div v-show="selectedTab === 'Reviews'">
+                <p>
+                    <input 
+                        v-model="searchQuery" 
+                        placeholder="Search reviews..." 
+                        class="search-input"
+                    />
+                </p>
+
+                <p v-if="filteredReviews.length === 0 && searchQuery">
+                    No reviews match your search.
+                </p>
+
                 <p v-if="!reviews.length">There are no reviews yet.</p>
-                <ul>
-                    <li v-for="(review, index) in reviews" :key="index">
+                <ul v-else>
+                    <li v-for="(review, index) in filteredReviews" :key="index">
                         <p><strong>{{ review.name }}</strong></p>
                         <p>Rating: {{ review.rating }}</p>
                         <p>{{ review.review }}</p>
-                        <p>Recomend: {{ review.recommend }}</p>
+                        <p>Recommend: {{ review.recommend }}</p>
                     </li>
                 </ul>
             </div>
@@ -295,7 +307,24 @@ Vue.component('product-tabs', {
     data() {
         return {
             tabs: ['Reviews', 'Make a Review', 'Shipping', 'Details'],
-            selectedTab: 'Reviews'
+            selectedTab: 'Reviews',
+            searchQuery: ''
+        }
+    },
+
+    computed: {
+        filteredReviews() {
+            if (!this.searchQuery) return this.reviews;
+
+            const query = this.searchQuery.toLowerCase();
+            return this.reviews.filter(review => {
+                return (
+                    review.name?.toLowerCase().includes(query) ||
+                    review.review?.toLowerCase().includes(query) ||
+                    review.recommend?.toLowerCase().includes(query) ||
+                    review.rating.toString().includes(query)
+                );
+            });
         }
     }
 })
@@ -329,6 +358,8 @@ let app = new Vue({
             if (variantId) {
                 this.updateCart(parseInt(variantId));
             }
+            this.isDraggingOver = false;
         }
+
     }
 })
