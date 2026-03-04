@@ -33,6 +33,10 @@ Vue.component('product', {
                 :key="variant.variantId"
                 :style="{ backgroundColor:variant.variantColor }"
                 @mouseover="updateProduct(index)"
+                draggable="true"
+                @dragstart="dragStart($event, variant)"
+
+                &nbsp;
             >
             </div>
 
@@ -67,7 +71,7 @@ Vue.component('product', {
                     variantId: 2235,
                     variantColor: 'blue',
                     variantImage: "./assets/vmSocks-blue-onWhite.jpg",
-                    variantQuantity: 0
+                    variantQuantity: 20
                 }
                 ],
                 sizes: ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'],
@@ -85,8 +89,11 @@ Vue.component('product', {
             
             updateProduct(index) {
                 this.selectedVariant = index;
-                console.log(this.selectedVariant);
             },
+
+            dragStart(event, variant) {
+            event.dataTransfer.setData('text/plain', variant.variantId);
+            }           
 
     },
 
@@ -300,7 +307,8 @@ let app = new Vue({
     el: '#app',
     data: {
         premium:true,
-        cart: []
+        cart: [],
+        isDraggingOver: false
     },
 
     methods: {
@@ -312,6 +320,14 @@ let app = new Vue({
             const index = this.cart.indexOf(id)
             if (index !== -1){
                this.cart.splice(index, 1) 
+            }
+        },
+
+        handleDrop(event) {
+            event.preventDefault();
+            const variantId = event.dataTransfer.getData('text/plain');
+            if (variantId) {
+                this.updateCart(parseInt(variantId));
             }
         }
     }
