@@ -18,9 +18,13 @@ Vue.component('product', {
             <p>{{ description }}</p>
             <a :href="link"> More products like this.</a>
             <p>{{ sale }}</p>
-            <p v-if="inventory > 10">In stock</p>
-            <p v-else-if="inventory <= 10 && inventory > 0">Almost sold out!</p>
-            <p v-else :style="{ textDecoration: 'line-through' }">Out of stock</p>
+            <p v-if="inStock">In stock</p>
+            <p v-else
+                :class="{ 'line-through': !inStock}"    
+            >
+                Out of Stock
+                
+            </p>
             
 
             <div 
@@ -81,11 +85,7 @@ Vue.component('product', {
             
             updateProduct(index) {
                 this.selectedVariant = index;
-                console.log(index);
-            },
-
-            inStock(){
-                return this.variants[this.selectedVariant].variantQuantity
+                console.log(this.selectedVariant);
             },
 
     },
@@ -105,6 +105,10 @@ Vue.component('product', {
             } else {
                 return this.brand + this.product + ' standart price '
             }
+        },
+
+        inStock(){
+            return this.variants[this.selectedVariant].variantQuantity
         },
 
         shipping() {
